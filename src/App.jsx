@@ -19,6 +19,15 @@ function formatDate(value) {
   });
 }
 
+async function fetchIndex(signal) {
+  const response = await fetch("/index.json", { signal });
+  if (!response.ok) {
+    throw new Error("No se pudo cargar el indice.");
+  }
+
+  return response.json();
+}
+
 export default function App() {
   const [index, setIndex] = useState(EMPTY_INDEX);
   const [query, setQuery] = useState("");
@@ -28,45 +37,44 @@ export default function App() {
   const [loadError, setLoadError] = useState(false);
   const deferredQuery = useDeferredValue(query);
 
-  useEffect(() => {
-    let cancelled = false;
+  function applyIndexData(data) {
+    setIndex(data);
+    setActiveFolderPath((data.folders ?? []).find((folder) => folder.parentPath === null)?.path ?? null);
+    setLoadError(false);
+  }
 
-    fetch("/index.json")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("No se pudo cargar el indice.");
-        }
+  function handleLoadFailure() {
+    setIndex(EMPTY_INDEX);
+    setActiveFolderPath(null);
+    setLoadError(true);
+  }
 
-        return response.json();
-      })
+  function reloadIndex() {
+    const controller = new AbortController();
+
+    setLoading(true);
+
+    fetchIndex(controller.signal)
       .then((data) => {
-        if (cancelled) {
-          return;
-        }
-
-        setIndex(data);
-        setActiveFolderPath((data.folders ?? []).find((folder) => folder.parentPath === null)?.path ?? null);
-        setLoadError(false);
+        applyIndexData(data);
       })
-      .catch(() => {
-        if (cancelled) {
+      .catch((error) => {
+        if (error.name === "AbortError") {
           return;
         }
 
-        setIndex(EMPTY_INDEX);
-        setActiveFolderPath(null);
-        setLoadError(true);
+        handleLoadFailure();
       })
       .finally(() => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       });
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    return () => controller.abort();
+  }
+
+  useEffect(() => reloadIndex(), []);
 
   const library = useMemo(() => buildLibrary(index), [index]);
   const resolvedShortcuts = useMemo(() => resolveShortcuts(atajos, index), [index]);
@@ -102,31 +110,16 @@ export default function App() {
 
   return (
     <div className="page-shell">
-      <div className="page-glow page-glow-left" />
-      <div className="page-glow page-glow-right" />
-
       <div className="app">
         <header className="hero">
-          <p className="eyebrow">Indice</p>
           <h1>Material OPSO</h1>
           <p className="hero-copy">
-            Busca presentaciones, imagenes, audios, documentos y archivos historicos del Drive
-            de OPSO desde una sola pagina.
+            Busca presentaciones, imágenes, audios, documentos y archivos históricos del Drive de
+            OPSO desde una sola página.
           </p>
 
           <SearchBar value={query} onChange={setQuery} />
           <TypeChips active={typeFilter} onPick={setTypeFilter} />
-
-          <div className="hero-stats">
-            <div className="stat">
-              <span className="stat-value">{index.meta.fileCount ?? 0}</span>
-              <span className="stat-label">archivos indexados</span>
-            </div>
-            <div className="stat">
-              <span className="stat-value">{index.meta.folderCount ?? 0}</span>
-              <span className="stat-label">carpetas recorridas</span>
-            </div>
-          </div>
         </header>
 
         <main className="content">
@@ -134,19 +127,29 @@ export default function App() {
             <section className="panel">
               <div className="section-head">
                 <h2>Atajos frecuentes</h2>
-                <p>Tarjetas curadas para lo que mas se pide.</p>
+                <p>
+                  {resolvedShortcuts.length === 0
+                    ? "Aun no hay atajos destacados."
+                    : `${resolvedShortcuts.length} acceso${resolvedShortcuts.length === 1 ? "" : "s"} directo${resolvedShortcuts.length === 1 ? "" : "s"} para lo más pedido.`}
+                </p>
               </div>
 
-              <div className="shortcuts-grid">
-                {resolvedShortcuts.map((atajo) => (
-                  <ShortcutCard
-                    key={atajo.etiqueta}
-                    atajo={atajo}
-                    onOpenFolder={handleOpenFolder}
-                    onSearch={handleShortcutSearch}
-                  />
-                ))}
-              </div>
+              {resolvedShortcuts.length > 0 ? (
+                <div className="shortcuts-grid">
+                  {resolvedShortcuts.map((atajo) => (
+                    <ShortcutCard
+                      key={atajo.etiqueta}
+                      atajo={atajo}
+                      onOpenFolder={handleOpenFolder}
+                      onSearch={handleShortcutSearch}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p>Agrega atajos en la configuración cuando quieras destacar material frecuente.</p>
+                </div>
+              )}
             </section>
           ) : null}
 
@@ -156,28 +159,32 @@ export default function App() {
             <section className="panel">
               <div className="section-head">
                 <h2>Explorar carpetas</h2>
-                <p>Navega el indice como si recorrieras el Drive por secciones.</p>
+                <p>
+                  {index.meta.fileCount ?? 0} archivos indexados en {index.meta.folderCount ?? 0}{" "}
+                  carpetas.
+                </p>
               </div>
 
               {currentFolder ? (
                 <>
                   <div className="browser-toolbar">
-                    <div className="breadcrumbs">
+                    <nav className="breadcrumbs" aria-label="Ruta de carpetas">
                       {breadcrumbs.map((crumb) => (
                         <button
                           key={crumb.path}
                           type="button"
                           className={`breadcrumb${crumb.path === currentFolder.path ? " active" : ""}`}
                           onClick={() => handleOpenFolder(crumb.path)}
+                          aria-current={crumb.path === currentFolder.path ? "page" : undefined}
                         >
                           {crumb.label}
                         </button>
                       ))}
-                    </div>
+                    </nav>
 
                     {currentFolder.path !== library.rootFolder?.path ? (
                       <button type="button" className="btn btn-secondary" onClick={handleReturnToRoot}>
-                        Volver a la raiz
+                        Volver a la raíz
                       </button>
                     ) : null}
                   </div>
@@ -186,7 +193,8 @@ export default function App() {
                     <p className="browser-summary-name">{currentFolder.name}</p>
                     <p className="browser-summary-meta">
                       {folderContents.folders.length} subcarpeta
-                      {folderContents.folders.length === 1 ? "" : "s"} · {folderContents.items.length} archivo
+                      {folderContents.folders.length === 1 ? "" : "s"} · {folderContents.items.length}{" "}
+                      archivo
                       {folderContents.items.length === 1 ? "" : "s"}
                     </p>
                   </div>
@@ -223,9 +231,9 @@ export default function App() {
             <section className="panel">
               <div className="section-head">
                 <h2>Resultados</h2>
-                <p>
+                <p aria-live="polite">
                   {results.length === 0
-                    ? "No encontramos coincidencias con esa combinacion."
+                    ? "No encontramos coincidencias con esa combinación."
                     : `${results.length} resultado${results.length === 1 ? "" : "s"} encontrado${
                         results.length === 1 ? "" : "s"
                       }.`}
@@ -234,7 +242,7 @@ export default function App() {
 
               {results.length === 0 ? (
                 <div className="empty-state">
-                  <p>Prueba con menos palabras, otro anio o un tipo distinto.</p>
+                  <p>Prueba con menos palabras, otro año o un tipo distinto.</p>
                 </div>
               ) : (
                 <div className="results-list">
@@ -247,19 +255,28 @@ export default function App() {
           )}
 
           {loadError ? (
-            <section className="notice">
-              No pudimos cargar <code>index.json</code>. Revisa que el archivo exista en
-              <code>public/</code> y vuelve a generar el indice si hace falta.
+            <section className="notice notice-error" aria-live="polite">
+              <div>
+                No pudimos cargar <code>index.json</code>. Revisa que el archivo exista en
+                <code>public/</code> y vuelve a generar el indice si hace falta.
+              </div>
+              <button type="button" className="btn btn-secondary" onClick={reloadIndex}>
+                Reintentar carga
+              </button>
             </section>
           ) : null}
 
-          {loading ? <section className="notice">Cargando indice...</section> : null}
+          {loading ? (
+            <section className="notice" aria-live="polite">
+              Cargando indice...
+            </section>
+          ) : null}
         </main>
 
         <footer className="footer">
           {index.meta.generatedAt && index.meta.generatedAt !== "1970-01-01T00:00:00Z"
             ? `Indice actualizado el ${formatDate(index.meta.generatedAt)}`
-            : "Indice aun no generado"}
+            : "Índice aún no generado"}
         </footer>
       </div>
     </div>

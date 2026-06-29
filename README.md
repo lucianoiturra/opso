@@ -51,15 +51,8 @@ Edita `atajos.json` a mano. Cada entrada puede ser:
 
 - `{ "etiqueta", "icono", "tipo": "busqueda", "valor": "<consulta>" }`
 - `{ "etiqueta", "icono", "tipo": "link", "valor": "<url>" }`
-- `{ "etiqueta", "tipo": "archivo", "id": "<id_drive>" }`
-- `{ "etiqueta", "tipo": "archivo", "rutaCompleta": "OPSO / Carpeta / Archivo.ext" }`
-- `{ "etiqueta", "tipo": "carpeta", "id": "<id_drive>" }`
-- `{ "etiqueta", "tipo": "carpeta", "ruta": "OPSO / Carpeta" }`
 
 Iconos validos: `presentacion`, `imagen`, `audio`, `video`, `pdf`, `documento`, `otro`.
-
-Si el atajo apunta a un `archivo`, la portada resuelve ese recurso dentro del indice y lo
-lleva directo a descarga. Si apunta a una `carpeta`, abre el explorador interno en esa ruta.
 
 ## Estructura principal
 

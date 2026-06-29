@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 const STAGES = [
@@ -46,7 +46,7 @@ const YEARS = [
       ["06 Operativo", "Material registrado"],
       ["07 Recuento", "Encuentro de voluntarios, Fotos Recuento, Imprimir, Video"],
       ["09 Campaña Donaciones", "Donaciones, Testimonio 1"],
-      ["10 Diseño y Merchandising", "Manual informativo, Polera, Pendón"],
+      ["10 Diseño y Merchandising", "Manual informativo, Polera, pendón"],
     ],
   },
   {
@@ -85,22 +85,70 @@ const TRANSVERSAL = [
   "Download 2026-02-16...zip (9,2 GB) - Sin clasificar; pendiente de revisar.",
 ];
 
-function ArchiveModal({ onClose }) {
+function ArchiveModal({ headingId, onClose, triggerRef }) {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialogNode = dialogRef.current;
+    if (!dialogNode) {
+      return undefined;
+    }
+
+    const focusableElements = dialogNode.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    const firstFocusable = focusableElements[0];
+    const lastFocusable = focusableElements[focusableElements.length - 1];
+
+    firstFocusable?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || focusableElements.length === 0) {
+        return;
+      }
+
+      if (event.shiftKey && document.activeElement === firstFocusable) {
+        event.preventDefault();
+        lastFocusable?.focus();
+      } else if (!event.shiftKey && document.activeElement === lastFocusable) {
+        event.preventDefault();
+        firstFocusable?.focus();
+      }
+    }
+
+    dialogNode.addEventListener("keydown", handleKeyDown);
+    document.body.classList.add("modal-open");
+
+    return () => {
+      dialogNode.removeEventListener("keydown", handleKeyDown);
+      document.body.classList.remove("modal-open");
+      triggerRef.current?.focus();
+    };
+  }, [onClose, triggerRef]);
+
   return createPortal(
     <div className="archive-modal-backdrop" onMouseDown={onClose}>
       <div
+        ref={dialogRef}
         className="archive-modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="archive-guide-heading"
+        aria-labelledby={headingId}
+        tabIndex={-1}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="archive-modal-head">
           <div>
             <p className="archive-guide-kicker">Índice del archivo</p>
-            <h2 id="archive-guide-heading">Cómo está ordenado el material</h2>
+            <h2 id={headingId}>Cómo está ordenado el material</h2>
           </div>
-          <button type="button" className="archive-modal-close" onClick={onClose}>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cerrar
           </button>
         </div>
@@ -162,32 +210,14 @@ function ArchiveModal({ onClose }) {
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
 export default function ArchiveGuide() {
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    document.body.classList.add("modal-open");
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.classList.remove("modal-open");
-    };
-  }, [isOpen]);
+  const headingId = useId();
+  const triggerRef = useRef(null);
 
   return (
     <>
@@ -197,12 +227,23 @@ export default function ArchiveGuide() {
             <span className="archive-guide-kicker">Índice del archivo</span>
             <span className="archive-guide-title">Cómo está ordenado el material</span>
           </span>
-          <button type="button" className="archive-guide-toggle" onClick={() => setIsOpen(true)}>
+          <button
+            ref={triggerRef}
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setIsOpen(true)}
+          >
             Ver detalle
           </button>
         </div>
       </section>
-      {isOpen ? <ArchiveModal onClose={() => setIsOpen(false)} /> : null}
+      {isOpen ? (
+        <ArchiveModal
+          headingId={headingId}
+          onClose={() => setIsOpen(false)}
+          triggerRef={triggerRef}
+        />
+      ) : null}
     </>
   );
 }

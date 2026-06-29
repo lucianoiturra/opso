@@ -10,13 +10,14 @@ const CHIPS = [
 
 export default function TypeChips({ active, onPick }) {
   return (
-    <div className="chips" aria-label="Filtrar por tipo">
+    <div className="chips" role="group" aria-label="Filtrar por tipo de archivo">
       {CHIPS.map((chip) => (
         <button
           key={chip.label}
           type="button"
           className={`chip${active === chip.key ? " active" : ""}`}
           onClick={() => onPick(chip.key)}
+          aria-pressed={active === chip.key}
         >
           {chip.label}
         </button>

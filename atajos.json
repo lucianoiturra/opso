@@ -1,19 +1,14 @@
 [
   {
-    "etiqueta": "Logo OPSO",
-    "tipo": "archivo",
-    "rutaCompleta": "Archivos OPSO / 01 Recursos / Logos / Logo para registrar / Logo nuevo.jpg"
+    "etiqueta": "Logos OPSO",
+    "icono": "carpeta",
+    "tipo": "link",
+    "valor": "https://drive.google.com/drive/folders/114K8dhAnc9GdOmiZMZzFLJvaO6jYjI-T?usp=drive_link"
   },
   {
-    "etiqueta": "Banco de logos",
-    "icono": "otro",
-    "tipo": "carpeta",
-    "ruta": "Archivos OPSO / 01 Recursos / Logos"
-  },
-  {
-    "etiqueta": "Cantos 2024",
-    "icono": "audio",
-    "tipo": "busqueda",
-    "valor": "cantos 2024"
+    "etiqueta": "PPT Canciones",
+    "icono": "presentacion",
+    "tipo": "link",
+    "valor": "https://drive.google.com/drive/folders/1aDTc3cWb8W8xTruLEUJwZZJ1tNSzehEO?usp=drive_link"
   }
 ]

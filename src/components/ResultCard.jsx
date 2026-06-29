@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 const TYPE_BADGE = {
   presentacion: "PPT",
   imagen: "IMG",
@@ -21,20 +23,41 @@ function formatSize(bytes) {
 }
 
 export default function ResultCard({ item }) {
+  const [copyState, setCopyState] = useState("idle");
+
+  useEffect(() => {
+    if (copyState !== "done") {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCopyState("idle");
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [copyState]);
+
   async function copyLink() {
     try {
       await navigator.clipboard?.writeText(item.downloadUrl);
+      setCopyState("done");
     } catch {
-      // Si el navegador bloquea el portapapeles, simplemente omitimos el feedback.
+      setCopyState("error");
     }
   }
 
   return (
     <article className="result-card">
-      <div className="result-badge">{TYPE_BADGE[item.type] ?? TYPE_BADGE.otro}</div>
+      <div className="result-badge" aria-hidden="true">
+        {TYPE_BADGE[item.type] ?? TYPE_BADGE.otro}
+      </div>
 
       <div className="result-main">
-        <p className="result-name">{item.name}</p>
+        <p className="result-name" title={item.name}>
+          {item.name}
+        </p>
         <p className="result-meta">
           {item.path}
           {item.year ? ` · ${item.year}` : ""}
@@ -49,10 +72,24 @@ export default function ResultCard({ item }) {
         <a className="btn btn-secondary" href={item.viewUrl} target="_blank" rel="noreferrer">
           Vista previa
         </a>
-        <button type="button" className="btn btn-secondary" onClick={copyLink}>
-          Copiar link
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={copyLink}
+          aria-describedby={`copy-status-${item.id}`}
+        >
+          {copyState === "done"
+            ? "Link copiado"
+            : copyState === "error"
+              ? "No se pudo copiar"
+              : "Copiar link"}
         </button>
       </div>
+
+      <span id={`copy-status-${item.id}`} className="sr-only" aria-live="polite">
+        {copyState === "done" ? `Se copio el link de ${item.name}.` : ""}
+        {copyState === "error" ? `No se pudo copiar el link de ${item.name}.` : ""}
+      </span>
     </article>
   );
 }
