@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { FOLDER_MIME } from "./classify.js";
-import { listChildren, toItem } from "./drive.js";
+import { buildFolderViewUrl, listChildren, toItem } from "./drive.js";
 
 const YEAR_PATTERN = /\b(19\d{2}|20\d{2}|2100)\b/;
 
@@ -25,15 +25,24 @@ export function inferYear(itemPath, modifiedTime) {
 
 export async function walk(rootId, rootName, { listChildrenImpl }) {
   const items = [];
+  const folders = [];
   let folderCount = 0;
 
-  async function visit(folderId, folderPath) {
+  async function visit(folderId, folderName, folderPath, parentPath) {
     folderCount += 1;
+    folders.push({
+      id: folderId,
+      name: folderName,
+      path: folderPath,
+      parentPath,
+      viewUrl: buildFolderViewUrl(folderId),
+    });
+
     const children = await listChildrenImpl(folderId);
 
     for (const child of children) {
       if (child.mimeType === FOLDER_MIME) {
-        await visit(child.id, `${folderPath} / ${child.name}`);
+        await visit(child.id, child.name, `${folderPath} / ${child.name}`, folderPath);
         continue;
       }
 
@@ -43,17 +52,18 @@ export async function walk(rootId, rootName, { listChildrenImpl }) {
     }
   }
 
-  await visit(rootId, rootName);
-  return { items, folderCount };
+  await visit(rootId, rootName, rootName, null);
+  return { items, folders, folderCount };
 }
 
-export function buildIndex({ items, folderCount }) {
+export function buildIndex({ items, folders, folderCount }) {
   return {
     meta: {
       generatedAt: new Date().toISOString(),
       fileCount: items.length,
       folderCount,
     },
+    folders,
     items,
   };
 }
@@ -78,8 +88,8 @@ export async function main() {
   }
 
   const listChildrenImpl = (folderId) => listChildren(folderId, { apiKey });
-  const { items, folderCount } = await walk(rootId, rootName, { listChildrenImpl });
-  const index = buildIndex({ items, folderCount });
+  const { items, folders, folderCount } = await walk(rootId, rootName, { listChildrenImpl });
+  const index = buildIndex({ items, folders, folderCount });
   const outputPath = path.resolve("public/index.json");
 
   await writeIndexAtomic(outputPath, index);

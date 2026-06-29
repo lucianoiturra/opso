@@ -18,6 +18,10 @@ export function buildViewUrl(id) {
   return `https://drive.google.com/file/d/${id}/view`;
 }
 
+export function buildFolderViewUrl(id) {
+  return `https://drive.google.com/drive/folders/${id}`;
+}
+
 export function toItem(file, path) {
   return {
     id: file.id,

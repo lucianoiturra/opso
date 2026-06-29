@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildDownloadUrl,
+  buildFolderViewUrl,
   buildViewUrl,
   listChildren,
   toItem,
@@ -10,6 +11,7 @@ describe("url builders", () => {
   it("builds download and view urls", () => {
     expect(buildDownloadUrl("ABC")).toBe("https://drive.google.com/uc?export=download&id=ABC");
     expect(buildViewUrl("ABC")).toBe("https://drive.google.com/file/d/ABC/view");
+    expect(buildFolderViewUrl("ABC")).toBe("https://drive.google.com/drive/folders/ABC");
   });
 });
 

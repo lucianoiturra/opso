@@ -29,7 +29,7 @@ describe("inferYear", () => {
 });
 
 describe("walk", () => {
-  it("traverses folders depth-first and builds paths, years, folder count", async () => {
+  it("traverses folders depth-first and builds paths, folders, years, folder count", async () => {
     const tree = {
       ROOT: [
         { id: "F2024", name: "2024", mimeType: FOLDER_MIME },
@@ -50,6 +50,22 @@ describe("walk", () => {
     const result = await walk("ROOT", "OPSO", { listChildrenImpl });
 
     expect(result.folderCount).toBe(2);
+    expect(result.folders).toEqual([
+      {
+        id: "ROOT",
+        name: "OPSO",
+        path: "OPSO",
+        parentPath: null,
+        viewUrl: "https://drive.google.com/drive/folders/ROOT",
+      },
+      {
+        id: "F2024",
+        name: "2024",
+        path: "OPSO / 2024",
+        parentPath: "OPSO",
+        viewUrl: "https://drive.google.com/drive/folders/F2024",
+      },
+    ]);
     expect(result.items).toEqual([
       {
         id: "PPT",
@@ -80,13 +96,15 @@ describe("walk", () => {
 });
 
 describe("buildIndex", () => {
-  it("produces meta and items", () => {
+  it("produces meta, folders and items", () => {
     const index = buildIndex({
+      folders: [{ id: "F1" }],
       items: [{ id: "1" }],
       folderCount: 3,
     });
 
     expect(index.items).toEqual([{ id: "1" }]);
+    expect(index.folders).toEqual([{ id: "F1" }]);
     expect(index.meta.fileCount).toBe(1);
     expect(index.meta.folderCount).toBe(3);
     expect(new Date(index.meta.generatedAt).toISOString()).toBe(index.meta.generatedAt);
@@ -97,7 +115,7 @@ describe("writeIndexAtomic", () => {
   it("writes to a temp file and renames into place", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "indice-opso-"));
     const filePath = path.join(tempDir, "index.json");
-    const payload = { meta: { fileCount: 1 }, items: [{ id: "1" }] };
+    const payload = { meta: { fileCount: 1 }, folders: [{ id: "F1" }], items: [{ id: "1" }] };
 
     await writeIndexAtomic(filePath, payload);
 
