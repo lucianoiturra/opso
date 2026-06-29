@@ -287,6 +287,113 @@ button {
   font-weight: 700;
 }
 
+.shortcut-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shortcut-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.browser-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.breadcrumb {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.7);
+  padding: 8px 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.breadcrumb.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border-color: transparent;
+}
+
+.browser-summary {
+  margin-bottom: 18px;
+}
+
+.browser-summary-name,
+.browser-summary-meta {
+  margin: 0;
+}
+
+.browser-summary-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.browser-summary-meta {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.folder-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 252, 246, 0.9);
+  padding: 16px;
+}
+
+.folder-card-main p {
+  margin: 0;
+}
+
+.folder-card-label {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.folder-card-name {
+  margin-top: 6px !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.folder-card-path {
+  margin-top: 6px !important;
+  color: var(--muted);
+  font-size: 0.93rem;
+}
+
+.folder-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .results-list {
   display: flex;
   flex-direction: column;
@@ -377,6 +484,11 @@ button {
 }
 
 @media (max-width: 800px) {
+  .browser-toolbar {
+    flex-direction: column;
+    align-items: start;
+  }
+
   .result-card {
     grid-template-columns: 1fr;
   }

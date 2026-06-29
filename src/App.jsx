@@ -1,12 +1,14 @@
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import atajos from "../atajos.json";
+import FolderCard from "./components/FolderCard.jsx";
 import ResultCard from "./components/ResultCard.jsx";
 import SearchBar from "./components/SearchBar.jsx";
 import ShortcutCard from "./components/ShortcutCard.jsx";
 import TypeChips from "./components/TypeChips.jsx";
+import { buildLibrary, getFolderContents, resolveShortcuts } from "./index-data.js";
 import { search } from "./search.js";
 
-const EMPTY_INDEX = { meta: {}, items: [] };
+const EMPTY_INDEX = { meta: {}, folders: [], items: [] };
 
 function formatDate(value) {
   return new Date(value).toLocaleDateString("es-CL", {
@@ -20,6 +22,7 @@ export default function App() {
   const [index, setIndex] = useState(EMPTY_INDEX);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState(null);
+  const [activeFolderPath, setActiveFolderPath] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const deferredQuery = useDeferredValue(query);
@@ -41,6 +44,7 @@ export default function App() {
         }
 
         setIndex(data);
+        setActiveFolderPath((data.folders ?? []).find((folder) => folder.parentPath === null)?.path ?? null);
         setLoadError(false);
       })
       .catch(() => {
@@ -49,6 +53,7 @@ export default function App() {
         }
 
         setIndex(EMPTY_INDEX);
+        setActiveFolderPath(null);
         setLoadError(true);
       })
       .finally(() => {
@@ -62,12 +67,36 @@ export default function App() {
     };
   }, []);
 
-  const results = search(index.items, deferredQuery, { typeFilter });
+  const library = useMemo(() => buildLibrary(index), [index]);
+  const resolvedShortcuts = useMemo(() => resolveShortcuts(atajos, index), [index]);
+  const results = useMemo(() => search(index.items, deferredQuery, { typeFilter }), [index.items, deferredQuery, typeFilter]);
   const searching = query.trim() !== "" || typeFilter !== null;
+  const currentFolderPath = activeFolderPath ?? library.rootFolder?.path ?? null;
+  const currentFolder = currentFolderPath ? library.folderByPath.get(currentFolderPath) ?? null : null;
+  const folderContents = currentFolderPath
+    ? getFolderContents(library, currentFolderPath)
+    : { folders: [], items: [] };
+  const breadcrumbs = currentFolder
+    ? currentFolder.path.split(" / ").map((segment, indexValue, parts) => ({
+        label: segment,
+        path: parts.slice(0, indexValue + 1).join(" / "),
+      }))
+    : [];
 
   function handleShortcutSearch(nextQuery) {
+    setActiveFolderPath(library.rootFolder?.path ?? null);
     setTypeFilter(null);
     setQuery(nextQuery);
+  }
+
+  function handleOpenFolder(nextFolderPath) {
+    setQuery("");
+    setTypeFilter(null);
+    setActiveFolderPath(nextFolderPath);
+  }
+
+  function handleReturnToRoot() {
+    setActiveFolderPath(library.rootFolder?.path ?? null);
   }
 
   return (
@@ -108,14 +137,84 @@ export default function App() {
               </div>
 
               <div className="shortcuts-grid">
-                {atajos.map((atajo) => (
+                {resolvedShortcuts.map((atajo) => (
                   <ShortcutCard
                     key={atajo.etiqueta}
                     atajo={atajo}
+                    onOpenFolder={handleOpenFolder}
                     onSearch={handleShortcutSearch}
                   />
                 ))}
               </div>
+            </section>
+          ) : null}
+
+          {!searching ? (
+            <section className="panel">
+              <div className="section-head">
+                <h2>Explorar carpetas</h2>
+                <p>Navega el indice como si recorrieras el Drive por secciones.</p>
+              </div>
+
+              {currentFolder ? (
+                <>
+                  <div className="browser-toolbar">
+                    <div className="breadcrumbs">
+                      {breadcrumbs.map((crumb) => (
+                        <button
+                          key={crumb.path}
+                          type="button"
+                          className={`breadcrumb${crumb.path === currentFolder.path ? " active" : ""}`}
+                          onClick={() => handleOpenFolder(crumb.path)}
+                        >
+                          {crumb.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {currentFolder.path !== library.rootFolder?.path ? (
+                      <button type="button" className="btn btn-secondary" onClick={handleReturnToRoot}>
+                        Volver a la raiz
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="browser-summary">
+                    <p className="browser-summary-name">{currentFolder.name}</p>
+                    <p className="browser-summary-meta">
+                      {folderContents.folders.length} subcarpeta
+                      {folderContents.folders.length === 1 ? "" : "s"} · {folderContents.items.length} archivo
+                      {folderContents.items.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+
+                  {folderContents.folders.length > 0 ? (
+                    <div className="folder-grid">
+                      {folderContents.folders.map((folder) => (
+                        <FolderCard key={folder.id} folder={folder} onOpen={handleOpenFolder} />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {folderContents.items.length > 0 ? (
+                    <div className="results-list">
+                      {folderContents.items.map((item) => (
+                        <ResultCard key={item.id} item={item} />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {folderContents.folders.length === 0 && folderContents.items.length === 0 ? (
+                    <div className="empty-state">
+                      <p>Esta carpeta no tiene contenido indexado todavia.</p>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="empty-state">
+                  <p>Este indice no trae carpetas navegables todavia. Vuelve a ejecutar el sync.</p>
+                </div>
+              )}
             </section>
           ) : (
             <section className="panel">
