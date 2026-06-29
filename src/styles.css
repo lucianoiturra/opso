@@ -256,10 +256,6 @@ button {
   overflow: hidden;
 }
 
-.archive-guide {
-  display: block;
-}
-
 .archive-guide-summary {
   display: flex;
   align-items: center;
@@ -314,17 +310,21 @@ button {
 .archive-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(32, 26, 16, 0.48);
+  min-height: 100dvh;
+  background: rgba(32, 26, 16, 0.62);
   padding: 28px;
+  backdrop-filter: blur(4px);
 }
 
 .archive-modal {
+  display: flex;
+  flex-direction: column;
   width: min(940px, 100%);
-  max-height: min(86vh, 920px);
+  max-height: min(86dvh, 920px);
   overflow: hidden;
   border: 1px solid rgba(87, 69, 37, 0.24);
   border-radius: 26px;
@@ -364,7 +364,8 @@ button {
 
 .archive-guide-body {
   border-top: 1px solid var(--line);
-  max-height: calc(min(86vh, 920px) - 106px);
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 22px;
 }
@@ -774,6 +775,10 @@ button {
     padding: 18px;
   }
 
+  .archive-guide-panel {
+    padding: 0;
+  }
+
   .archive-modal-backdrop {
     padding: 10px;
   }
@@ -785,11 +790,6 @@ button {
   .archive-modal-head {
     padding: 18px;
   }
-
-  .archive-guide-body {
-    max-height: calc(100vh - 130px);
-  }
-
   .stage-row {
     grid-template-columns: 1fr;
   }

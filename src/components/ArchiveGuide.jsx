@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 const STAGES = [
   ["00", "Administrativo", "Planificación, reuniones, estadísticas, manuales"],
@@ -84,6 +85,87 @@ const TRANSVERSAL = [
   "Download 2026-02-16...zip (9,2 GB) - Sin clasificar; pendiente de revisar.",
 ];
 
+function ArchiveModal({ onClose }) {
+  return createPortal(
+    <div className="archive-modal-backdrop" onMouseDown={onClose}>
+      <div
+        className="archive-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="archive-guide-heading"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="archive-modal-head">
+          <div>
+            <p className="archive-guide-kicker">Índice del archivo</p>
+            <h2 id="archive-guide-heading">Cómo está ordenado el material</h2>
+          </div>
+          <button type="button" className="archive-modal-close" onClick={onClose}>
+            Cerrar
+          </button>
+        </div>
+
+        <div className="archive-guide-body">
+          <p className="archive-guide-intro">
+            El archivo audiovisual e institucional de OPSO está organizado por año. Cada año usa
+            la misma plantilla canónica de etapas, aunque solo aparecen las etapas que tuvo.
+            Dentro de cada etapa, los archivos sueltos se agrupan por tipo: Fotos, Videos, Audio,
+            Diseños y Documentos. Las subcarpetas de trabajo se conservan.
+          </p>
+
+          <div className="archive-guide-block">
+            <h3>Plantilla canónica de etapas</h3>
+            <div className="stage-table" role="table" aria-label="Plantilla canónica de etapas">
+              {STAGES.map(([number, name, description]) => (
+                <div className="stage-row" role="row" key={number}>
+                  <span className="stage-number" role="cell">
+                    {number}
+                  </span>
+                  <span className="stage-name" role="cell">
+                    {name}
+                  </span>
+                  <span className="stage-description" role="cell">
+                    {description}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="archive-guide-block">
+            <h3>Contenido por año</h3>
+            <div className="year-grid">
+              {YEARS.map((year) => (
+                <article className="year-card" key={year.title}>
+                  <h4>{year.title}</h4>
+                  <ul>
+                    {year.stages.map(([stage, content]) => (
+                      <li key={`${year.title}-${stage}`}>
+                        <strong>{stage}</strong>
+                        {content ? ` - ${content}` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="archive-guide-block">
+            <h3>Material transversal</h3>
+            <ul className="transversal-list">
+              {TRANSVERSAL.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function ArchiveGuide() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -108,8 +190,8 @@ export default function ArchiveGuide() {
   }, [isOpen]);
 
   return (
-    <section className="panel archive-guide-panel">
-      <div className="archive-guide">
+    <>
+      <section className="panel archive-guide-panel">
         <div className="archive-guide-summary">
           <span>
             <span className="archive-guide-kicker">Índice del archivo</span>
@@ -119,85 +201,8 @@ export default function ArchiveGuide() {
             Ver detalle
           </button>
         </div>
-
-        {isOpen ? (
-          <div className="archive-modal-backdrop" onMouseDown={() => setIsOpen(false)}>
-            <div
-              className="archive-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="archive-guide-heading"
-              onMouseDown={(event) => event.stopPropagation()}
-            >
-              <div className="archive-modal-head">
-                <div>
-                  <p className="archive-guide-kicker">Índice del archivo</p>
-                  <h2 id="archive-guide-heading">Cómo está ordenado el material</h2>
-                </div>
-                <button type="button" className="archive-modal-close" onClick={() => setIsOpen(false)}>
-                  Cerrar
-                </button>
-              </div>
-
-              <div className="archive-guide-body">
-                <p className="archive-guide-intro">
-                  El archivo audiovisual e institucional de OPSO está organizado por año. Cada
-                  año usa la misma plantilla canónica de etapas, aunque solo aparecen las etapas
-                  que tuvo. Dentro de cada etapa, los archivos sueltos se agrupan por tipo: Fotos,
-                  Videos, Audio, Diseños y Documentos. Las subcarpetas de trabajo se conservan.
-                </p>
-
-                <div className="archive-guide-block">
-                  <h3>Plantilla canónica de etapas</h3>
-                  <div className="stage-table" role="table" aria-label="Plantilla canónica de etapas">
-                    {STAGES.map(([number, name, description]) => (
-                      <div className="stage-row" role="row" key={number}>
-                        <span className="stage-number" role="cell">
-                          {number}
-                        </span>
-                        <span className="stage-name" role="cell">
-                          {name}
-                        </span>
-                        <span className="stage-description" role="cell">
-                          {description}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="archive-guide-block">
-                  <h3>Contenido por año</h3>
-                  <div className="year-grid">
-                    {YEARS.map((year) => (
-                      <article className="year-card" key={year.title}>
-                        <h4>{year.title}</h4>
-                        <ul>
-                          {year.stages.map(([stage, content]) => (
-                            <li key={`${year.title}-${stage}`}>
-                              <strong>{stage}</strong>
-                              {content ? ` - ${content}` : ""}
-                            </li>
-                          ))}
-                        </ul>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="archive-guide-block">
-                  <h3>Material transversal</h3>
-                  <ul className="transversal-list">
-                    {TRANSVERSAL.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </section>
+      </section>
+      {isOpen ? <ArchiveModal onClose={() => setIsOpen(false)} /> : null}
+    </>
   );
 }
