@@ -247,6 +247,156 @@ button {
   color: var(--muted);
 }
 
+.archive-guide-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.archive-guide {
+  display: block;
+}
+
+.archive-guide-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.archive-guide-summary::-webkit-details-marker {
+  display: none;
+}
+
+.archive-guide-kicker,
+.archive-guide-title {
+  display: block;
+}
+
+.archive-guide-kicker {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.archive-guide-title {
+  margin-top: 4px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.archive-guide-toggle {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.72);
+  color: var(--muted);
+  padding: 8px 12px;
+  font-size: 0.92rem;
+}
+
+.archive-guide[open] .archive-guide-toggle {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.archive-guide-body {
+  border-top: 1px solid var(--line);
+  padding: 22px;
+}
+
+.archive-guide-intro {
+  max-width: 60rem;
+  margin: 0;
+  color: var(--muted);
+}
+
+.archive-guide-block {
+  margin-top: 24px;
+}
+
+.archive-guide-block h3 {
+  margin: 0 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.22rem;
+}
+
+.stage-table {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 252, 246, 0.74);
+}
+
+.stage-row {
+  display: grid;
+  grid-template-columns: 58px minmax(150px, 0.9fr) minmax(220px, 1.5fr);
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.stage-row + .stage-row {
+  border-top: 1px solid var(--line);
+}
+
+.stage-number {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.stage-name {
+  font-weight: 700;
+}
+
+.stage-description {
+  color: var(--muted);
+}
+
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.year-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 252, 246, 0.82);
+  padding: 16px;
+}
+
+.year-card h4 {
+  margin: 0 0 10px;
+  font-size: 1.02rem;
+}
+
+.year-card ul,
+.transversal-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.year-card li,
+.transversal-list li {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.year-card li:first-child,
+.transversal-list li:first-child {
+  margin-top: 0;
+}
+
+.year-card strong {
+  color: var(--text);
+}
+
 .shortcuts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -505,6 +655,19 @@ button {
     flex-direction: column;
     align-items: start;
   }
+
+  .archive-guide-summary {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .stage-row {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .stage-description {
+    grid-column: 2;
+  }
 }
 
 @media (max-width: 560px) {
@@ -533,5 +696,18 @@ button {
   .chips {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .archive-guide-body,
+  .archive-guide-summary {
+    padding: 18px;
+  }
+
+  .stage-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-description {
+    grid-column: auto;
   }
 }

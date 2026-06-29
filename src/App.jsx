@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import atajos from "../atajos.json";
+import ArchiveGuide from "./components/ArchiveGuide.jsx";
 import FolderCard from "./components/FolderCard.jsx";
 import ResultCard from "./components/ResultCard.jsx";
 import SearchBar from "./components/SearchBar.jsx";
@@ -148,6 +149,8 @@ export default function App() {
               </div>
             </section>
           ) : null}
+
+          {!searching ? <ArchiveGuide /> : null}
 
           {!searching ? (
             <section className="panel">
