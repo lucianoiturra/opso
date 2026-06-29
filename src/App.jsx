@@ -106,11 +106,11 @@ export default function App() {
 
       <div className="app">
         <header className="hero">
-          <p className="eyebrow">Indice publico</p>
+          <p className="eyebrow">Indice</p>
           <h1>Material OPSO</h1>
           <p className="hero-copy">
             Busca presentaciones, imagenes, audios, documentos y archivos historicos del Drive
-            publico de OPSO desde una sola pagina.
+            de OPSO desde una sola pagina.
           </p>
 
           <SearchBar value={query} onChange={setQuery} />

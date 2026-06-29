@@ -1,7 +1,7 @@
 export default function SearchBar({ value, onChange }) {
   return (
     <label className="search-shell">
-      <span className="search-label">Buscador público</span>
+      <span className="search-label">Buscador</span>
       <input
         className="searchbar"
         type="search"

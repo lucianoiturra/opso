@@ -198,6 +198,9 @@ button {
 }
 
 .content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 22px;
 }
 
@@ -211,6 +214,7 @@ button {
 }
 
 .panel {
+  margin: 0;
   padding: 22px;
 }
 
