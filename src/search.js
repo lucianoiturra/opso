@@ -43,6 +43,7 @@ function buildNeedle(item) {
     normalizedName: normalize(item.name),
     normalizedPath: normalize(item.path),
     normalizedText: normalize(`${item.name} ${item.path}`),
+    normalizedWords: tokenize(`${item.name} ${item.path}`),
   };
 }
 
@@ -75,6 +76,21 @@ function rankMatch(item, queryText) {
   return item.tokensInName ? 2 : 3;
 }
 
+function fuzzyScoreForToken(words, token) {
+  const wordFuse = new Fuse(
+    words.map((word) => ({ word })),
+    {
+      keys: ["word"],
+      includeScore: true,
+      threshold: 0.22,
+      ignoreLocation: true,
+    },
+  );
+
+  const best = wordFuse.search(token)[0];
+  return best?.score ?? null;
+}
+
 export function search(items, query, options = {}) {
   const { typeFilter: chipFilter = null } = options;
   const { typeFilter: queryFilter, textTokens } = parseQuery(query);
@@ -98,48 +114,33 @@ export function search(items, query, options = {}) {
   }
 
   const preparedItems = scopedItems.map(buildNeedle);
-  const byId = new Map(preparedItems.map((item) => [item.id, item]));
-  const fuse = new Fuse(preparedItems, {
-    keys: ["normalizedText"],
-    includeScore: true,
-    threshold: 0.4,
-    ignoreLocation: true,
-  });
-
-  let candidateIds = null;
-  const fuzzyScores = new Map();
-
-  for (const token of textTokens) {
-    const results = fuse.search(token);
-    const tokenIds = new Set();
-
-    for (const result of results) {
-      tokenIds.add(result.item.id);
-      const previous = fuzzyScores.get(result.item.id) ?? 0;
-      fuzzyScores.set(result.item.id, previous + (result.score ?? 0));
-    }
-
-    candidateIds =
-      candidateIds === null
-        ? tokenIds
-        : new Set([...candidateIds].filter((id) => tokenIds.has(id)));
-
-    if (candidateIds.size === 0) {
-      return [];
-    }
-  }
-
   const queryText = textTokens.join(" ");
-  const matches = [...candidateIds].map((id) => {
-    const item = byId.get(id);
-    return {
-      ...item,
-      fuzzyScore: fuzzyScores.get(id) ?? Number.POSITIVE_INFINITY,
-      tokensInName: textTokens.every((token) => item.normalizedName.includes(token)),
-    };
-  });
+  const matches = preparedItems
+    .map((item) => {
+      let fuzzyScore = 0;
+
+      for (const token of textTokens) {
+        if (item.normalizedText.includes(token)) {
+          continue;
+        }
+
+        const tokenScore = fuzzyScoreForToken(item.normalizedWords, token);
+        if (tokenScore === null) {
+          return null;
+        }
+
+        fuzzyScore += tokenScore;
+      }
+
+      return {
+        ...item,
+        fuzzyScore,
+        tokensInName: textTokens.every((token) => item.normalizedName.includes(token)),
+      };
+    })
+    .filter(Boolean);
 
   return sortMatches(matches, queryText).map(
-    ({ normalizedName, normalizedPath, normalizedText, fuzzyScore, tokensInName, ...item }) => item,
+    ({ normalizedName, normalizedPath, normalizedText, normalizedWords, fuzzyScore, tokensInName, ...item }) => item,
   );
 }
